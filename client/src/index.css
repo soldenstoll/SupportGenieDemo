@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,12 +22,23 @@ a:hover {
   color: #535bf2;
 }
 
-body {
+/* make the body a centering flex container for the app shell */
+html, body, #root {
+  height: 100%;
+}
+
+body.app-shell {
   margin: 0;
   display: flex;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   min-width: 320px;
-  min-height: 100vh;
+  padding: 32px 0; /* vertical breathing room */
+}
+
+/* ensure the page background is black */
+body.app-shell {
+  background: #000000;
 }
 
 h1 {
