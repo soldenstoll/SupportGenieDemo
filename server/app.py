@@ -1,9 +1,7 @@
 # Imports
 from flask import Flask, request, jsonify
-from langchain.tools import Tool
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.agents import initialize_agent, AgentType
+from langchain.tools import tool
+from langchain.agents import create_agent
 from rag import init_db, query_db, get_llm
 from tools import create_ticket
 
@@ -12,13 +10,14 @@ app = Flask(__name__)
 # Get model and tools
 model = get_llm()
 
-ticket_tool = Tool(
-  name="create_ticket",
-  func=create_ticket,
-  description="Use this tool when you need to create a ticket."
-)
+@tool("create_ticket")
+def create_ticket_tool(title, severity, summary):
+  '''
+  Wraps create_ticket into a tool
+  '''
+  return create_ticket(title, severity, summary)
 
-tools = [ticket_tool]
+tools = [create_ticket_tool]
 
 template = """
   You have the following documents and their similarity scores:
@@ -31,12 +30,7 @@ template = """
   low, answer as if you are unsure.
 """
 
-agent = initialize_agent(
-  tools=tools,
-  llm=model,
-  agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-  verbose=True
-)
+agent = create_agent(model, tools=tools)
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -61,7 +55,7 @@ def process_query(query):
     context += ", Similarity Score: " + str(res[1]) + "\n\n"
 
   prompt = template.format(context=context, question=query)
-  answer = agent.run(prompt)
+  answer = agent.invoke({"input": prompt})
 
   # Output result
   return answer

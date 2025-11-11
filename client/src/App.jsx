@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './App.css'
+import askQuestion from './api/askQuestion'
 
 function App() {
   const [messages, setMessages] = useState([
@@ -19,13 +20,12 @@ function App() {
     setMessages((m) => [...m, userMsg])
     setInput('')
 
-    // Fake bot reply for the first draft
-    setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        { id: Date.now() + 1, from: 'bot', text: 'Thanks — I can help with that. Can you share a bit more detail?' },
-      ])
-    }, 700)
+    // Query server for model response
+    const response = askQuestion(text)
+    setMessages((m) => [
+      ...m,
+      { id: Date.now() + 1, from: 'bot', text: response },
+    ])
   }
 
   function handleKeyDown(e) {
