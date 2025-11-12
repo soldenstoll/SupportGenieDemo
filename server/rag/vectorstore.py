@@ -1,5 +1,5 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 import json
 
@@ -54,7 +54,7 @@ def init_db():
       docs.append(doc)
 
     # Add docs to our db
-    _db.add_texts(docs)
+    _db.add_documents(docs)
 
   except FileNotFoundError:
     print(f"Error: The file '{DOCS_PATH}' was not found.")

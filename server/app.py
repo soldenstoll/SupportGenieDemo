@@ -3,34 +3,44 @@ from flask import Flask, request, jsonify
 from langchain.tools import tool
 from langchain.agents import create_agent
 from rag import init_db, query_db, get_llm
-from tools import create_ticket
+from tools import create_ticket, print_ticket
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
+# Initialize database
+init_db()
 
 # Get model and tools
 model = get_llm()
 
-@tool("create_ticket")
-def create_ticket_tool(title, severity, summary):
-  '''
-  Wraps create_ticket into a tool
-  '''
-  return create_ticket(title, severity, summary)
-
-tools = [create_ticket_tool]
-
 template = """
-  You have the following documents and their similarity scores:
+The user asks: {question}
 
-  {context}
+You have the following documents and their distance scores. Low scores mean the documents are
+close to the user request:
 
-  The user question is: {question}
+{context}
 
-  Answer according to the system prompt. If the similarity scores are all very
-  low, answer as if you are unsure.
+Respond to the user according to the system prompt. If the distance scores are all very
+high, answer as if you are unsure.
 """
 
-agent = create_agent(model, tools=tools)
+# System prompt
+system_prompt = """
+You are SupportGenie, an AI support assistant.
+- Retrieve answers from the knowledge base and cite document IDs.
+- If the user says "open ticket" or "report issue", you should use the tool `create_ticket` 
+with title, severity, and summary. To do so, come up with a title, a severity, and a consice summary, 
+and then include a message of the form
+"[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" to the
+top of the response.
+- Be concise, professional, and avoid hallucinations.
+- If unsure, say: "That information isn't available in the knowledge base."
+"""
+
+agent = create_agent(model, system_prompt=system_prompt)
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -51,16 +61,41 @@ def process_query(query):
   context = ""
   rank = 1
   for res in results:
-    context += str(rank) + ". Content: " + str(res[0])
-    context += ", Similarity Score: " + str(res[1]) + "\n\n"
+    context += str(rank) + ". id: " + res[0]["id"]
+    context += "\n" + "title: " + res[0]["title"] + "\n"
+    context += "content: " + res[0]["content"] + "\n"
+    context += "Similarity Score: " + str(res[1]) + "\n\n"
+    rank += 1
 
   prompt = template.format(context=context, question=query)
-  answer = agent.invoke({"input": prompt})
+  answer = agent.invoke({
+    "messages": [
+      {"role": "user", "content": prompt}
+    ]
+  })
 
-  # Output result
-  return answer
+  # Locate result and check for tool calls
+  response = answer['messages'][1].content
+  callidx = response.find("]END")
+  if callidx != -1:
+    splits = response.split("]END")
+
+    # Get the actual response
+    response = splits[1].strip()
+
+    # Parse the tool call and carry it out
+    call = splits[0].replace("[TOOL CALL:","")
+    args = call.split("ARG")
+    print(response)
+    print(args)
+    ticket = create_ticket(*args)
+
+    # Add ticket details to response
+    response += "\n\nI have opened a support ticket for you:"
+    response += f"\n{print_ticket(ticket)}"
+
+  return response
 
 # Run app and load data into the db
 if __name__ == "__main__":
-  init_db()
-  app.run()
+  app.run(debug=True)

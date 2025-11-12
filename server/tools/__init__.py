@@ -1,1 +1,1 @@
-from .tickettools import create_ticket
+from .tickettools import create_ticket, print_ticket
