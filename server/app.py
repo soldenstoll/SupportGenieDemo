@@ -35,7 +35,7 @@ You are SupportGenie, an AI support assistant.
 - Be concise, professional, and avoid hallucinations.
 - If unsure, say: "That information isn't available in the knowledge base."
 - If the user says "open ticket" or "report issue", create a ticket by coming up with a title, a severity, and a consice summary.
-- If you create a ticket, include a message of the form "[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" to the top of the response.
+- If you choose to create a ticket, include a message of the form "[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" to the top of the response.
 """
 
 agent = create_agent(model, system_prompt=system_prompt)
