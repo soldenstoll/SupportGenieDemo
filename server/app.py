@@ -31,13 +31,11 @@ high, answer as if you are unsure.
 system_prompt = """
 You are SupportGenie, an AI support assistant.
 - Retrieve answers from the knowledge base and cite document IDs.
-- If the user says "open ticket" or "report issue", you should use the tool `create_ticket` 
-with title, severity, and summary. To do so, come up with a title, a severity, and a consice summary, 
-and then include a message of the form
-"[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" to the
-top of the response.
+- At the end of your response, include "References: <insert the document IDs you used here>"
 - Be concise, professional, and avoid hallucinations.
 - If unsure, say: "That information isn't available in the knowledge base."
+- If the user says "open ticket" or "report issue", create a ticket by coming up with a title, a severity, and a consice summary.
+- If you create a ticket, include a message of the form "[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" to the top of the response.
 """
 
 agent = create_agent(model, system_prompt=system_prompt)
@@ -75,24 +73,25 @@ def process_query(query):
   })
 
   # Locate result and check for tool calls
-  response = answer['messages'][1].content
-  callidx = response.find("]END")
+  answer = answer['messages'][1].content
+  callidx = answer.find("]END")
   if callidx != -1:
-    splits = response.split("]END")
+    splits = answer.split("]END")
 
     # Get the actual response
-    response = splits[1].strip()
+    answer = splits[1].strip()
 
     # Parse the tool call and carry it out
     call = splits[0].replace("[TOOL CALL:","")
     args = call.split("ARG")
-    print(response)
-    print(args)
     ticket = create_ticket(*args)
 
     # Add ticket details to response
-    response += "\n\nI have opened a support ticket for you:"
+    response = "I have opened a support ticket for you:"
     response += f"\n{print_ticket(ticket)}"
+    response += "\n\n" + answer
+  else: 
+    response = answer
 
   return response
 

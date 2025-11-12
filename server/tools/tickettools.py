@@ -24,10 +24,11 @@ def create_ticket(title, severity, summary):
 def print_ticket(ticket):
   '''
   Prints ticket in the format
-  Ticket - [id]: [Title] 
-  Severity: [severity]
-  Summary: [summary]
+  Ticket [id]: 
+    Title: [Title] 
+    Severity: [severity]
+    Summary: [summary]
   '''
-  res = f"Ticket - {ticket["ticket_id"]}: {ticket["title"]}\nSeverity: "
+  res = f"Ticket {ticket["ticket_id"]}:\nTitle: {ticket["title"]}\nSeverity: "
   res += f"{ticket["severity"]}\nSummary: {ticket["summary"]}"
   return res
