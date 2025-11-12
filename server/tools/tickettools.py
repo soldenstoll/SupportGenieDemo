@@ -29,6 +29,6 @@ def print_ticket(ticket):
     Severity: [severity]
     Summary: [summary]
   '''
-  res = f"Ticket {ticket["ticket_id"]}:\nTitle: {ticket["title"]}\nSeverity: "
-  res += f"{ticket["severity"]}\nSummary: {ticket["summary"]}"
+  res = f"Ticket {ticket['ticket_id']}:\nTitle: {ticket['title']}\nSeverity: "
+  res += f"{ticket['severity']}\nSummary: {ticket['summary']}"
   return res

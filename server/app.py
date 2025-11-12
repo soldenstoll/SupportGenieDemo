@@ -16,28 +16,42 @@ init_db()
 model = get_llm()
 
 template = """
-The user asks: {question}
-
-You have the following documents and their distance scores. Low scores mean the documents are
-close to the user request:
+- The user asks: {question}
+- You have the following documents and their distance scores. Low scores mean the documents are
+close to the user request. Use these if they are helpful for answering the user's question:
 
 {context}
 
-Respond to the user according to the system prompt. If the distance scores are all very
-high, answer as if you are unsure.
+- If you use content from a document in your response, at the end of your response, include a message stating
+"References: [insert the document IDs you used here]"
+- To create a ticket, come up with a title, severtiy, and summary, and include a message in the format:
+"[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" 
+at the very start of your response.
+- If all of the documents have high distance scores and are not useful to your answer, respond as if you are
+unsure.
+
+EXAMPLES:
+- If the user asks: "How do I reset my password?", 
+You should respond with something like:
+To reset your password, go to Settings > Security.  If Two-Factor Authentication (2FA) is enabled, 
+you'll need a backup code or registered device. 
+
+References: [faq_01].
+
+- If the user says: "Open a support ticket so they can talk to someone"
+Respond with something like:
+[TOOL CALL: Connecting with a support memberARGMediumARGUser wants to speak to a representative]END
+
+Let me know if you have any other questions!
 """
 
 # System prompt
 system_prompt = """
 You are SupportGenie, an AI support assistant.
 - Retrieve answers from the knowledge base and cite document IDs.
-- At the end of your response, include "References: [insert the document IDs you used here]"
+- If the user says "open ticket" or "report issue", call the tool `create_ticket` with title, severity, and summary.
 - Be concise, professional, and avoid hallucinations.
 - If unsure, say: "That information isn't available in the knowledge base."
-- If the user says "open ticket" or "report issue", create a ticket by coming up with a title, a severity, and a consice summary.
-- If you choose to create a ticket, include a message of the form 
-"[TOOL CALL: <add your title here>ARG<add your severity here>ARG<add your summary here>]END\n\n" 
-to the top of the response.
 """
 
 agent = create_agent(model, system_prompt=system_prompt)
