@@ -1,7 +1,7 @@
 # Setup
 Below is the setup on a Linux machine. First, run 
 ```cd server``` followed by ```python3 -m venv venv``` and ```source venv/bin/activate``` to setup and start a virtual environment. Next, ensure ```ollama``` is installed locally, and run ```$ ollama pull gemma2:2b``` in your terminal outside of the venv. Next, install all dependencies using
-```pip install -r requirements.txt```. Once this is complete, run the server with ```flask run```. Next, open up a new terminal and run ```cd client``` followed by ```npm run dev``` to run the UI locally.
+```pip install -r requirements.txt```. Once this is complete, run the server with ```flask run```. Next, open up a new terminal and run ```cd client``` followed by ```npm install``` and ```npm run dev``` to run the UI locally.
 
 My general approach was to set up a vector database with each document as an entry to enable retrieval. This was done using ```ChromaDB``` and the ```all-MiniLM-L6-v2``` transformer from HuggingFace. This setup is done when the server is started. Then, once the server recieves a message from the user via the UI, the top 3 most similar documents were retrieved from the database and formatted into a prompt. I created a langchain agent with a locally ran Ollama model as the backbone. My main focus from here was implementing the ```create_ticket``` tool as Ollama models do no support langchain tools directly. To work around this, I updated the system prompt to tell the model to add a formatted string to the top of any reponse that required creating a ticket. If such a string was present in the response, a ticket is manually created using the data provided by the model, and the resulting ticket information is added to the response.
 
